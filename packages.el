@@ -54,6 +54,14 @@
            :repo "tecosaur/org-pandoc-import"
            :files ("*.el" "filters" "preprocessors")))
 
+(package! org-ol-tree
+  :recipe (:host github :repo "Townk/org-ol-tree"))
+
 (package! jest)
 
 (package! prettier-js)
+
+(package! browse-at-remote)
+
+;; Use lsp for js|ts file
+(disable-packages! tide)
