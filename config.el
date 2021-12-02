@@ -89,6 +89,7 @@
 (add-hook 'web-mode-hook 'maybe-use-prettier)
 (add-hook 'rjsx-mode-hook 'maybe-use-prettier)
 
+(add-hook 'org-mode-hook 'valign-mode)
 
 ;; Auto Start LSP
 (use-package! lsp-mode

@@ -63,5 +63,7 @@
 
 (package! browse-at-remote)
 
+(package! valign)
+
 ;; Use lsp for js|ts file
 (disable-packages! tide)
