@@ -57,6 +57,19 @@
 (package! org-ol-tree
   :recipe (:host github :repo "Townk/org-ol-tree"))
 
+(package! popweb
+  :recipe (:host github
+           :repo "manateelazycat/popweb"
+           :build (:not compile)))
+
+(package! popweb-dict
+ :recipe (:host github :repo "manateelazycat/popweb"
+          :files ("extension/dict/*")
+          :build (:not compile)))
+
+(package! pyim-greatdict
+  :recipe (:host github :repo "tumashu/pyim-greatdict"))
+
 (package! jest)
 
 (package! prettier-js)
@@ -64,6 +77,12 @@
 (package! browse-at-remote)
 
 (package! valign)
+
+(package! org-appear)
+
+(package! org-fancy-priorities)
+
+(package! visual-fill-column)
 
 ;; Use lsp for js|ts file
 (disable-packages! tide)

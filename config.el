@@ -52,7 +52,6 @@
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
 
-
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
 ;; - `load!' for loading external *.el files relative to this one
@@ -89,14 +88,46 @@
 (add-hook 'web-mode-hook 'maybe-use-prettier)
 (add-hook 'rjsx-mode-hook 'maybe-use-prettier)
 
-(add-hook 'org-mode-hook 'valign-mode)
+
+(use-package! visual-fill-column)
+
+;; org-mode
+(use-package! valign
+  :custom
+  (valign-fancy-bar t)
+  :hook
+  (org-mode . valign-mode))
+
+(add-hook 'org-mode-hook 'turn-on-auto-fill)
+
+(defun set-org-image-width () (setq org-image-actual-width 300))
+
+(add-hook 'org-mode-hook 'set-org-image-width)
+
+(use-package! org-appear
+  :hook (org-mode . org-appear-mode)
+  :config
+  (setq org-appear-autoemphasis t
+        org-appear-autosubmarkers t
+        org-appear-autolinks t
+        org-appear-autoentities t
+        org-appear-autokeywords t)
+  )
+
+
+(use-package! org-fancy-priorities
+  :diminish
+  :hook (org-mode . org-fancy-priorities-mode)
+  :config
+  (setq org-fancy-priorities-list
+        '("🅰" "🅱" "🅲" "🅳" "🅴")))
 
 ;; Auto Start LSP
 (use-package! lsp-mode
   :hook ((web-mode . lsp)
          (rjsx-mode . lsp)
          (typescript-mode . lsp)
-         ;; (vue-mode . lsp)
+         (vue-mode . lsp)
          (python-mode . lsp)
          (go-mode . lsp)
          (css-mode . lsp)
@@ -106,8 +137,11 @@
          (latex-mode . lsp))
   :commands lsp
   :config
+  (add-to-list 'lsp-language-id-configuration '(json-mode . "jsonc"))
   (setq lsp-idle-delay 0.2
-        lsp-enable-file-watchers nil))
+        lsp-enable-file-watchers nil
+        +format-with-lsp nil)
+  )
 
 ;; Config LSP UI
 (use-package! lsp-ui
@@ -117,6 +151,9 @@
         lsp-lens-enable t                  ; 显示被引用次数
         )
   )
+
+;; Pyim Dict
+(use-package! pyim-greatdict)
 
 ;; Org Outline
 (use-package! org-ol-tree
@@ -152,3 +189,64 @@
    )
   (treemacs-follow-mode +1)
   )
+
+;; DAP
+(after! dap-mode
+  (dap-register-debug-template "Node::Attach" (
+                                               list :type "node"
+                                               :request "attach"
+                                               :port 9229
+                                               :program "__ignored"
+                                               :name "Debug Attach NodeJs Server"
+                                               ))
+  )
+
+;; ;; Popweb
+;; (use-package! popweb)
+;; 
+;; (use-package popweb-dict-bing
+;;   :defer t
+;;   :commands (popweb-dict-bing-input popweb-dict-bing-pointer)
+;;   ) ; Translation using Bing
+;; 
+;; (use-package popweb-dict-youdao
+;;   :defer t
+;;   :commands (popweb-dict-youdao-input popweb-dict-youdao-pointer)
+;;   ) ; Translation using Youdao
+
+;; EAF
+(use-package eaf
+  :load-path "~/.emacs.d/site-lisp/emacs-application-framework" ; Set to "/usr/share/emacs/site-lisp/eaf" if installed from AUR
+  :custom
+  ; See https://Github.com/emacs-eaf/emacs-application-framework/wiki/Customization
+  (eaf--mac-enable-rosetta t)
+  (eaf-browser-continue-where-left-off t)
+  (eaf-browser-enable-adblocker t)
+  (browse-url-browser-function 'eaf-open-browser)
+  :config
+  (defalias 'browse-web #'eaf-open-browser)
+  ;; (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
+  ;; (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
+  ;; (eaf-bind-key take_photo "p" eaf-camera-keybinding)
+  ;; (eaf-bind-key nil "M-q" eaf-browser-keybinding)
+  )
+
+(require 'eaf-browser)
+;; (require 'eaf-demo)
+;; (require 'eaf-pdf-viewer)
+;; (require 'eaf-org-previewer)
+(require 'eaf-evil)
+
+(define-key key-translation-map (kbd "SPC")
+    (lambda (prompt)
+      (if (derived-mode-p 'eaf-mode)
+          (pcase eaf--buffer-app-name
+            ("browser" (if  (string= (eaf-call-sync "call_function" eaf--buffer-id "is_focus") "True")
+                           (kbd "SPC")
+                         (kbd eaf-evil-leader-key)))
+            ;; ("pdf-viewer" (kbd eaf-evil-leader-key))
+            ;; ("image-viewer" (kbd eaf-evil-leader-key))
+            (_  (kbd "SPC")))
+        (kbd "SPC"))))
+
+
