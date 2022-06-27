@@ -60,15 +60,19 @@
 (package! popweb
   :recipe (:host github
            :repo "manateelazycat/popweb"
+           :files ("*.*")
            :build (:not compile)))
 
 (package! popweb-dict
  :recipe (:host github :repo "manateelazycat/popweb"
-          :files ("extension/dict/*")
+          :files ("extension/dict/*.*")
           :build (:not compile)))
 
 (package! pyim-greatdict
-  :recipe (:host github :repo "tumashu/pyim-greatdict"))
+  :recipe (:host github
+           :repo "tumashu/pyim-greatdict"
+           :files ("*.*")
+           :build (:not compile)))
 
 (package! jest)
 
@@ -83,6 +87,12 @@
 (package! org-fancy-priorities)
 
 (package! visual-fill-column)
+
+(package! org-preview-html)
+
+(package! ox-gfm)
+
+(package! grip-mode)
 
 ;; Use lsp for js|ts file
 (disable-packages! tide)

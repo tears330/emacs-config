@@ -20,6 +20,8 @@
       web-mode-markup-indent-offset 2
       web-mode-enable-current-element-highlight t
       web-mode-enable-current-column-highlight t
+      code-review-gitlab-host "gitlab.qima-inc.com/api"
+      code-review-gitlab-graphql-host "gitlab.qima-inc.com/api"
       )
 
 ;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
@@ -40,10 +42,6 @@
 ;; `load-theme' function. This is the default:
 (setq doom-theme 'doom-vibrant)
 
-(setq doom-font (font-spec :family "Fira Code" :size 16)
-      doom-variable-pitch-font (font-spec :family "Fira Code" :size 16)
-      )
-
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
@@ -51,6 +49,9 @@
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
+
+;; indent
+(setq standard-indent 2)
 
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
@@ -91,12 +92,32 @@
 
 (use-package! visual-fill-column)
 
+;; font
+(let* (
+       (font "Fira Code")
+       (font-variable "Fira Code")
+       (font-chinese "PingFang SC")
+       (font-size 12)
+       )
+  (when (and font font-variable font-size)
+    (setq doom-font (font-spec :family font :size font-size)
+          doom-serif-font (font-spec :family font :size font-size)
+          doom-variable-pitch-font (font-spec :family font-variable :size font-size))
+    (add-hook! emacs-startup :append
+      (set-fontset-font t 'cjk-misc font-chinese nil 'prepend)
+      (set-fontset-font t 'han font-chinese nil 'prepend)
+      )))
+
 ;; org-mode
 (use-package! valign
   :custom
   (valign-fancy-bar t)
   :hook
   (org-mode . valign-mode))
+
+(use-package! org-preview-html
+  :after org
+  :config (setq org-preview-html-viewer 'xwidget))
 
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 
@@ -140,6 +161,7 @@
   (add-to-list 'lsp-language-id-configuration '(json-mode . "jsonc"))
   (setq lsp-idle-delay 0.2
         lsp-enable-file-watchers nil
+        lsp-go-gopls-server-path "/Users/zhangzhongyuan/go/bin/gopls"
         +format-with-lsp nil)
   )
 
@@ -153,7 +175,16 @@
   )
 
 ;; Pyim Dict
-(use-package! pyim-greatdict)
+(after! pyim
+  (setq pyim-page-tooltip 'posframe)
+  (setq-default pyim-punctuation-translate-p '(no yes auto)
+                pyim-english-input-switch-functions '(pyim-probe-dynamic-english
+                                                      pyim-probe-program-mode)))
+
+(use-package pyim-greatdict
+  :after pyim
+  :ensure nil
+  :config (pyim-greatdict-enable))
 
 ;; Org Outline
 (use-package! org-ol-tree
@@ -163,6 +194,23 @@
       :after org
       :localleader
       :desc "outline" "O" #'org-ol-tree)
+
+(use-package ox-gfm
+  :after org)
+
+(use-package! grip-mode
+  :defer t
+  :commands (grip-mode)
+  :init
+  (map! (:map (markdown-mode-map org-mode-map)
+         :localleader
+         "v" #'grip-mode))
+  :config
+  ;; Use embedded webkit to previe
+  (setq grip-preview-use-webkit t)
+  ;; Setup xwidget window popup rule
+  (set-popup-rule! "*xwidget" :side 'right :size .50 :select nil :quit t)
+  )
 
 ;; Add Private GitLab Address For browse-at-remote
 (use-package! browse-at-remote
@@ -201,52 +249,48 @@
                                                ))
   )
 
-;; ;; Popweb
+;; Popweb
 ;; (use-package! popweb)
-;; 
+
 ;; (use-package popweb-dict-bing
 ;;   :defer t
 ;;   :commands (popweb-dict-bing-input popweb-dict-bing-pointer)
 ;;   ) ; Translation using Bing
-;; 
+
 ;; (use-package popweb-dict-youdao
 ;;   :defer t
 ;;   :commands (popweb-dict-youdao-input popweb-dict-youdao-pointer)
 ;;   ) ; Translation using Youdao
 
 ;; EAF
-(use-package eaf
-  :load-path "~/.emacs.d/site-lisp/emacs-application-framework" ; Set to "/usr/share/emacs/site-lisp/eaf" if installed from AUR
-  :custom
-  ; See https://Github.com/emacs-eaf/emacs-application-framework/wiki/Customization
-  (eaf--mac-enable-rosetta t)
-  (eaf-browser-continue-where-left-off t)
-  (eaf-browser-enable-adblocker t)
-  (browse-url-browser-function 'eaf-open-browser)
-  :config
-  (defalias 'browse-web #'eaf-open-browser)
-  ;; (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
-  ;; (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
-  ;; (eaf-bind-key take_photo "p" eaf-camera-keybinding)
-  ;; (eaf-bind-key nil "M-q" eaf-browser-keybinding)
-  )
+;; (use-package eaf
+;;   :load-path "~/.emacs.d/site-lisp/emacs-application-framework" ; Set to "/usr/share/emacs/site-lisp/eaf" if installed from AUR
+;;   :custom
+;;                                         ; See https://Github.com/emacs-eaf/emacs-application-framework/wiki/Customization
+;;   ;; (eaf--mac-enable-rosetta t)
+;;   (eaf-browser-continue-where-left-off t)
+;;   (eaf-browser-enable-adblocker t)
+;;   (browse-url-browser-function 'eaf-open-browser)
+;;   :config
+;;   (defalias 'browse-web #'eaf-open-browser)
+;;   ;; (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
+;;   ;; (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
+;;   ;; (eaf-bind-key take_photo "p" eaf-camera-keybinding)
+;;   ;; (eaf-bind-key nil "M-q" eaf-browser-keybinding)
+;;   )
 
-(require 'eaf-browser)
+;; (use-package eaf-browser)
 ;; (require 'eaf-demo)
 ;; (require 'eaf-pdf-viewer)
-;; (require 'eaf-org-previewer)
-(require 'eaf-evil)
+;; (use-package eaf-org-previewer)
+;; (use-package eaf-evil)
 
 (define-key key-translation-map (kbd "SPC")
-    (lambda (prompt)
-      (if (derived-mode-p 'eaf-mode)
-          (pcase eaf--buffer-app-name
-            ("browser" (if  (string= (eaf-call-sync "call_function" eaf--buffer-id "is_focus") "True")
-                           (kbd "SPC")
-                         (kbd eaf-evil-leader-key)))
-            ;; ("pdf-viewer" (kbd eaf-evil-leader-key))
-            ;; ("image-viewer" (kbd eaf-evil-leader-key))
-            (_  (kbd "SPC")))
-        (kbd "SPC"))))
-
-
+  (lambda (prompt)
+    (if (derived-mode-p 'eaf-mode)
+        (pcase eaf--buffer-app-name
+          ("browser" (kbd "SPC"))
+          ;; ("pdf-viewer" (kbd eaf-evil-leader-key))
+          ;; ("image-viewer" (kbd eaf-evil-leader-key))
+          (_  (kbd "SPC")))
+      (kbd "SPC"))))
